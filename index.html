@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+html, body { width: 100%; background: #1a1a2e; font-family: 'Press Start 2P', monospace; }
+#gw { background: #1a1a2e; padding: 16px 12px 12px; width: 100%; max-width: 480px; margin: 0 auto; min-height: 100vh; }
+#startScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 32px; min-height: 80vh; }
+#startScreen h2 { color: #ffd700; font-size: 13px; line-height: 2.2; text-align: center; }
+#startBtn { background-color: #ffffff !important; color: #000000 !important; border: 4px solid #333; border-radius: 6px; padding: 20px 44px; font-family: 'Press Start 2P', monospace; font-size: 15px; cursor: pointer; box-shadow: 0 5px 0 #555; -webkit-appearance: none; display: block; }
+#startBtn:active { transform: translateY(3px); box-shadow: 0 2px 0 #555; }
+#gameArea { display: none; }
+#hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+#score { color: #ffd700; font-size: 13px; }
+#hearts { font-size: 14px; }
+#lv { color: #aaa; font-size: 13px; }
+#scene { background: #16213e; border-radius: 8px; padding: 34px 6px 0; position: relative; overflow: visible; }
+#desks { display: flex; justify-content: space-around; align-items: flex-end; }
+.unit { display: flex; flex-direction: column; align-items: center; position: relative; flex: 1; }
+.name-tag { font-size: 13px; color: #aaa; margin-bottom: 2px; }
+.name-tag.me { color: #ffd700; }
+.bubble { position: absolute; top: -4px; left: 50%; transform: translate(-50%,-100%); background: #fff; color: #222; border-radius: 5px; padding: 3px 6px; font-size: 10px; font-family: sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.12s; pointer-events: none; z-index: 10; }
+.bubble::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #fff; border-bottom: none; }
+.bubble.on { opacity: 1; }
+.belch-bubble { position: absolute; top: -4px; left: 50%; transform: translate(-50%,-100%); background: #d4f7a0; color: #2a4a00; border-radius: 5px; padding: 3px 6px; font-size: 10px; font-family: sans-serif; white-space: nowrap; opacity: 0; transition: opacity 0.12s; pointer-events: none; z-index: 10; border: 1px solid #7aaa22; font-weight: bold; }
+.belch-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #7aaa22; border-bottom: none; }
+.belch-bubble.on { opacity: 1; }
+.countdown { position: absolute; top: 0; right: 2px; background: #e24b4a; color: #fff; font-size: 13px; width: 20px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; z-index: 20; pointer-events: none; }
+.countdown.on { opacity: 1; }
+.char-seat { display: flex; flex-direction: column; align-items: center; }
+canvas.char { display: block; }
+.chair { position: relative; width: 40px; margin-top: -5px; }
+.chair-back { position: absolute; left: 2px; top: -14px; width: 5px; height: 16px; background: #5a3e1a; border-radius: 1px; }
+.chair-seat { width: 100%; height: 7px; background: #7a5a2a; border-top: 3px solid #9a7a3a; border-radius: 2px; }
+.chair-legs { display: flex; justify-content: space-between; padding: 0 3px; }
+.chair-leg { width: 4px; height: 9px; background: #5a3e1a; }
+.desk { width: 86px; height: 10px; background: #7a5c2a; border-top: 3px solid #9a7a3a; border-radius: 2px; margin-top: 2px; }
+.desk-leg { width: 5px; height: 11px; background: #5a4010; margin: 0 auto; }
+#floor { height: 10px; background: #2a2a4a; border-top: 3px solid #3a3a6a; margin-top: 2px; }
+#btns { display: flex; gap: 10px; margin-top: 14px; }
+.btn { flex: 1; padding: 16px 0; border-radius: 8px; border: 3px solid #2a4a7a; cursor: pointer; background: #0f3460; color: #fff; font-family: 'Press Start 2P', monospace; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 4px 0 #071a33; -webkit-tap-highlight-color: transparent; }
+.btn .ico { font-size: 26px; }
+.btn .label { font-size: 13px; color: #ccc; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #071a33; }
+.btn.ok { background: #1a7a3a !important; border-color: #2aaa54 !important; }
+.btn.fail { background: #7a1a1a !important; border-color: #aa2a2a !important; }
+#msg { text-align: center; margin-top: 10px; font-size: 13px; color: #666; min-height: 18px; line-height: 1.8; }
+#progress { height: 5px; background: #0f3460; margin-top: 8px; border-radius: 3px; overflow: hidden; }
+#prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#1a7a3a,#ffd700,#e24b4a); transition: width 0.4s; }
+.scene-overlay { position: absolute; inset: 0; background: #1a1a2ef2; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 30; padding: 20px; }
+.scene-overlay h2 { color: #ffd700; font-size: 13px; }
+.scene-overlay .big { color: #ffd700; font-size: 14px; }
+.scene-overlay p { color: #aaa; font-size: 13px; text-align: center; line-height: 2; }
+.scene-overlay .go-btn { background-color: #ffffff !important; color: #000000 !important; border: 3px solid #333; border-radius: 6px; padding: 14px 28px; font-family: 'Press Start 2P', monospace; font-size: 11px; cursor: pointer; box-shadow: 0 4px 0 #555; -webkit-appearance: none; }
+.scene-overlay .go-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #555; }
+</style>
+</head>
+<body>
+<div id="gw">
+  <div id="startScreen">
+    <h2>🏢 사무실 인내 게임</h2>
+    <button id="startBtn" onclick="startGame()">출근하기 🚪</button>
+  </div>
+  <div id="gameArea">
+    <div id="hud">
+      <div id="score">0</div>
+      <div id="hearts">❤️❤️❤️❤️❤️</div>
+      <div id="lv">LV 1</div>
+    </div>
+    <div id="scene">
+      <div id="desks">
+        <div class="unit">
+          <div class="bubble" id="bL">🦵 떨떨떨</div>
+          <div class="name-tag">동료 A</div>
+          <div class="char-seat">
+            <canvas class="char" id="cL" width="44" height="52"></canvas>
+            <div class="chair"><div class="chair-back"></div><div class="chair-seat"></div><div class="chair-legs"><div class="chair-leg"></div><div class="chair-leg"></div></div></div>
+          </div>
+          <div class="countdown" id="cdL"></div>
+          <div class="desk"></div><div class="desk-leg"></div>
+        </div>
+        <div class="unit">
+          <div class="bubble" id="bMe"></div>
+          <div class="name-tag me">나 👤</div>
+          <div class="char-seat">
+            <canvas class="char" id="cMe" width="44" height="52"></canvas>
+            <div class="chair"><div class="chair-back"></div><div class="chair-seat"></div><div class="chair-legs"><div class="chair-leg"></div><div class="chair-leg"></div></div></div>
+          </div>
+          <div class="desk"></div><div class="desk-leg"></div>
+        </div>
+        <div class="unit">
+          <div class="belch-bubble" id="bR">꺼억~ 🤮</div>
+          <div class="name-tag">동료 B</div>
+          <div class="char-seat">
+            <canvas class="char" id="cR" width="44" height="52"></canvas>
+            <div class="chair"><div class="chair-back"></div><div class="chair-seat"></div><div class="chair-legs"><div class="chair-leg"></div><div class="chair-leg"></div></div></div>
+          </div>
+          <div class="countdown" id="cdR"></div>
+          <div class="desk"></div><div class="desk-leg"></div>
+        </div>
+      </div>
+      <div id="floor"></div>
+      <div class="scene-overlay" id="overScr" style="display:none;">
+        <h2>😮‍💨 퇴근</h2>
+        <div class="big" id="finalScore"></div>
+        <p id="overMsg"></p>
+        <button class="go-btn" onclick="startGame()">다시 출근 😔</button>
+      </div>
+    </div>
+    <div id="btns">
+      <button class="btn" id="btnL" onclick="press('L')"><span class="ico">🦵</span><span class="label">째려보기</span></button>
+      <button class="btn" id="btnR" onclick="press('R')"><span class="ico">👄</span><span class="label">입냄새</span></button>
+    </div>
+    <div id="msg"></div>
+    <div id="progress"><div id="prog-fill"></div></div>
+  </div>
+</div>
+<script>
+let hp=5,score=0,lv=1,active=false,combo=0;
+let stateL='idle',stateR='idle';
+let timerL=null,timerR=null,raf=null,tick=0;
+let ropeApplied=false,bandApplied=false,belchPhase=0;
+let ropeCI=null,bandCI=null;
+const $=id=>document.getElementById(id);
+function px(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+function drawBase(ctx,shirt,hair,sway,face){
+  ctx.clearRect(0,0,44,52);
+  const ox=4,oy=1;
+  px(ctx,ox+2,oy+18,20,13,shirt);
+  px(ctx,ox+8,oy+14,6,5,'#F4C89B');
+  px(ctx,ox+5,oy+2,14,13,'#F4C89B');
+  px(ctx,ox+5,oy+0,14,5,hair);
+  px(ctx,ox+3,oy+2,4,6,hair);
+  px(ctx,ox+3,oy+6,3,4,'#e8b882');
+  px(ctx,ox+18,oy+6,3,4,'#e8b882');
+  if(face==='stare'){
+    px(ctx,ox+6,oy+8,4,2,'#222');px(ctx,ox+14,oy+8,4,2,'#222');
+    px(ctx,ox+7,oy+6,3,2,'#e24b4a');px(ctx,ox+15,oy+6,3,2,'#e24b4a');
+  }else if(face==='shocked'){
+    px(ctx,ox+6,oy+6,4,6,'#222');px(ctx,ox+8,oy+7,1,4,'#fff');
+    px(ctx,ox+14,oy+6,4,6,'#222');px(ctx,ox+16,oy+7,1,4,'#fff');
+    px(ctx,ox+8,oy+14,4,2,'#933');
+  }else if(face==='belch'){
+    px(ctx,ox+6,oy+8,4,2,'#222');px(ctx,ox+14,oy+8,4,2,'#222');
+    px(ctx,ox+4,oy+10,3,4,'#f0a0a0');px(ctx,ox+17,oy+10,3,4,'#f0a0a0');
+    px(ctx,ox+8,oy+13,6,3,'#222');px(ctx,ox+9,oy+14,4,2,'#cc4444');
+  }else{
+    px(ctx,ox+6,oy+8,4,3,'#222');px(ctx,ox+14,oy+8,4,3,'#222');
+    px(ctx,ox+7,oy+9,1,1,'#fff');px(ctx,ox+15,oy+9,1,1,'#fff');
+    px(ctx,ox+8,oy+13,4,2,'#c4846a');
+  }
+  px(ctx,ox+0,oy+19,3,8,shirt);px(ctx,ox+22,oy+19,3,8,shirt);
+  px(ctx,ox+0,oy+27,3,3,'#F4C89B');px(ctx,ox+22,oy+27,3,3,'#F4C89B');
+  const ls=sway;
+  px(ctx,ox+3,oy+31,8,6,'#2c2c4a');
+  px(ctx,ox+13,oy+31,8,6,'#2c2c4a');
+  px(ctx,ox+3,oy+37,5,9,'#2c2c4a');
+  px(ctx,ox+15,oy+37,5,9,'#2c2c4a');
+  px(ctx,ox+1,oy+46,8+ls,5,'#222');
+  px(ctx,ox+13,oy+46,8-ls,5,'#222');
+}
+function drawRope(ctx){
+  const ox=4,oy=1;
+  ctx.strokeStyle='#c8a050';ctx.lineWidth=2;ctx.setLineDash([2,2]);
+  ctx.beginPath();ctx.moveTo(ox+1,oy+43);
+  ctx.bezierCurveTo(ox+1,oy+49,ox+25,oy+49,ox+25,oy+43);
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#c8a050';ctx.beginPath();ctx.arc(ox+13,oy+47,3,0,Math.PI*2);ctx.fill();
+}
+function drawBand(ctx){
+  const ox=4,oy=1;
+  px(ctx,ox+6,oy+12,10,5,'#f0c090');
+  ctx.strokeStyle='#cc2222';ctx.lineWidth=1.5;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ox+7,oy+13);ctx.lineTo(ox+15,oy+16);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox+15,oy+13);ctx.lineTo(ox+7,oy+16);ctx.stroke();
+}
+function drawMe(f){drawBase($('cMe').getContext('2d'),'#8a2020','#222',0,f||'normal');}
+function drawL(s){const c=$('cL').getContext('2d');drawBase(c,'#1a5a9a','#3D2B1F',s||0,'normal');if(ropeApplied)drawRope(c);}
+function drawR(b){const c=$('cR').getContext('2d');drawBase(c,'#2a7a2a','#5a3020',0,b?'belch':'normal');if(bandApplied)drawBand(c);}
+function setCD(side,sec){const el=$(side==='L'?'cdL':'cdR');if(sec>0){el.textContent=sec;el.classList.add('on');}else{el.classList.remove('on');}}
+function applyRope(){ropeApplied=true;let cd=3;setCD('L',cd);clearInterval(ropeCI);ropeCI=setInterval(()=>{cd--;setCD('L',cd);if(cd<=0){clearInterval(ropeCI);ropeApplied=false;$('msg').textContent='밧줄이 풀렸다! 💢';}},1000);}
+function applyBand(){bandApplied=true;let cd=3;setCD('R',cd);clearInterval(bandCI);bandCI=setInterval(()=>{cd--;setCD('R',cd);if(cd<=0){clearInterval(bandCI);bandApplied=false;$('msg').textContent='밴드가 떨어졌다! 💢';}},1000);}
+function setBubble(id,on){$(id).classList.toggle('on',on);}
+function baseInterval(){return Math.max(2200,5200-(lv-1)*280)+Math.random()*1800;}
+function winMs(){return Math.max(900,2000-(lv-1)*80);}
+function schedL(){if(!active)return;timerL=setTimeout(()=>{if(!active)return;stateL='shaking';setBubble('bL',true);timerL=setTimeout(()=>{if(!active)return;if(stateL==='shaking'){stateL='idle';setBubble('bL',false);missHp('놓쳤다...');}schedL();},winMs());},baseInterval());}
+function schedR(){if(!active)return;timerR=setTimeout(()=>{if(!active)return;stateR='belching';setBubble('bR',true);timerR=setTimeout(()=>{if(!active)return;if(stateR==='belching'){stateR='idle';setBubble('bR',false);missHp('참아버렸다...');}schedR();},winMs());},baseInterval()+800);}
+function animate(){tick++;const sw=stateL==='shaking'?Math.round(Math.sin(tick*0.45)*4):0;if(stateR==='belching')belchPhase+=0.3;else belchPhase=0;drawL(sw);drawR(stateR==='belching');if(stateR==='belching'){const c=$('cR').getContext('2d');const img=c.getImageData(0,0,44,52);c.clearRect(0,0,44,52);c.putImageData(img,0,Math.round(Math.sin(belchPhase)*2));}raf=requestAnimationFrame(animate);}
+function press(side){if(!active)return;const btn=$(side==='L'?'btnL':'btnR');if(side==='L'&&stateL==='shaking'){clearTimeout(timerL);stateL='idle';setBubble('bL',false);applyRope();doHit(btn,'묶었다! 3초 후 풀림');schedL();}else if(side==='R'&&stateR==='belching'){clearTimeout(timerR);stateR='idle';setBubble('bR',false);applyBand();doHit(btn,'밴드 붙였다! 3초 후 떨어짐');schedR();}else{combo=0;hp--;updateHp();btn.classList.add('fail');setTimeout(()=>btn.classList.remove('fail'),300);$('msg').textContent=side==='L'?'멀쩡한데 왜 째려봐':'아직 안 꼈는데';drawMe('shocked');setTimeout(()=>drawMe('normal'),600);if(hp<=0)endGame();}}
+function doHit(btn,msg){combo++;score+=combo>=3?20:10;$('score').textContent=score;lv=Math.min(10,Math.floor(score/150)+1);$('lv').textContent='LV '+lv;$('prog-fill').style.width=Math.min(100,score/15)+'%';$('msg').textContent=combo>=3?msg+' x'+combo+'콤보!':msg;btn.classList.add('ok');setTimeout(()=>btn.classList.remove('ok'),280);drawMe('stare');setTimeout(()=>drawMe('normal'),450);}
+function missHp(msg){combo=0;hp--;updateHp();$('msg').textContent=msg;drawMe('shocked');setTimeout(()=>drawMe('normal'),700);if(hp<=0)endGame();}
+function updateHp(){$('hearts').textContent=[0,1,2,3,4].map(i=>i<hp?'❤️':'🖤').join('');}
+function endGame(){active=false;cancelAnimationFrame(raf);clearTimeout(timerL);clearTimeout(timerR);clearInterval(ropeCI);clearInterval(bandCI);stateL='idle';stateR='idle';setBubble('bL',false);setBubble('bR',false);setCD('L',0);setCD('R',0);$('finalScore').textContent='SCORE: '+score;const msgs=['오늘도 퇴직을 참았습니다.','이어폰이라도 끼세요.','재택근무를 신청하세요.','인내심 레전드.'];$('overMsg').textContent=msgs[score>300?3:score>150?2:score>60?1:0];$('overScr').style.display='flex';}
+function startGame(){hp=5;score=0;lv=1;combo=0;tick=0;active=true;ropeApplied=false;bandApplied=false;belchPhase=0;clearInterval(ropeCI);clearInterval(bandCI);stateL='idle';stateR='idle';setBubble('bL',false);setBubble('bR',false);setCD('L',0);setCD('R',0);updateHp();$('score').textContent='0';$('lv').textContent='LV 1';$('prog-fill').style.width='0%';$('msg').textContent='';$('startScreen').style.display='none';$('gameArea').style.display='block';$('overScr').style.display='none';cancelAnimationFrame(raf);drawMe('normal');drawL(0);drawR(false);animate();schedL();schedR();}
+</script>
+</body>
+</html>
